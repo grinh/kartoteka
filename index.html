@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Kartoteka</title>
+    <script type="text/javascript">
+        // Jeśli adres zawiera "localhost", użyj "/", w przeciwnym razie użyj "/pulp/"
+        var base = document.location.hostname === 'localhost' ? '/' : '/kartoteka/';
+        document.write('<base href="' + base + '" />');
+    </script>
+    <link href="_framework/dotnet.dyp7ox8hhq.js" rel="preload" as="script" fetchpriority="high" crossorigin="anonymous" integrity="sha256-JXt/Ih/PP4o2TAKyMIj6nQ3f7yVBDJ2jRaoFJv04i+U=" />
+    <link rel="stylesheet" href="lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="css/app.css" />
+    <link rel="icon" type="image/png" href="favicon.png" />
+    <link href="https://fonts.googleapis.com/css2?family=Special+Elite&display=swap" rel="stylesheet">
+    <link href="Kartoteka.styles.css" rel="stylesheet" />
+    <style>
+        .police-card input,
+        .police-card textarea {
+            background-color: transparent !important;
+            border: 1.5px solid transparent !important;
+            box-shadow: none !important;
+            outline: none !important;
+            transition: border-color 0.15s, background-color 0.15s;
+            resize: none !important;
+        }
+        .police-card input:placeholder-shown,
+        .police-card textarea:placeholder-shown {
+            background-color: #f0e8d0 !important;
+            border-color: #b89f72 !important;
+        }
+        .police-card input:focus,
+        .police-card textarea:focus {
+            background-color: #f0e8d0 !important;
+            border-color: #b89f72 !important;
+            outline: none !important;
+        }
+        .police-card textarea,
+        .police-card .field-display {
+            overflow: hidden !important;
+            resize: none !important;
+            min-height: 3.5rem !important;
+            border-radius: 0 !important;
+            margin-top: 0.15em !important;
+            padding: 0.35em 0.6em !important;
+            box-sizing: border-box !important;
+        }
+    </style>
+    <script type="importmap">{
+  "imports": {
+    "./_framework/blazor.webassembly.js": "./_framework/blazor.webassembly.66stpp682q.js",
+    "./_framework/dotnet.js": "./_framework/dotnet.dyp7ox8hhq.js",
+    "./_framework/dotnet.native.js": "./_framework/dotnet.native.ykrnppwhq2.js",
+    "./_framework/dotnet.runtime.js": "./_framework/dotnet.runtime.peu2mfb29t.js"
+  },
+  "scopes": {},
+  "integrity": {
+    "./_framework/blazor.webassembly.66stpp682q.js": "sha256-3lCWrko3zwspV40aQhs2S/IMkRSarnHRKIdkHhuXIBA=",
+    "./_framework/blazor.webassembly.js": "sha256-3lCWrko3zwspV40aQhs2S/IMkRSarnHRKIdkHhuXIBA=",
+    "./_framework/dotnet.dyp7ox8hhq.js": "sha256-JXt/Ih/PP4o2TAKyMIj6nQ3f7yVBDJ2jRaoFJv04i+U=",
+    "./_framework/dotnet.js": "sha256-JXt/Ih/PP4o2TAKyMIj6nQ3f7yVBDJ2jRaoFJv04i+U=",
+    "./_framework/dotnet.native.js": "sha256-nheeN4H7Js+avp9nd/sQxdaehbeEx3qriXjiZ3pSw6U=",
+    "./_framework/dotnet.native.ykrnppwhq2.js": "sha256-nheeN4H7Js+avp9nd/sQxdaehbeEx3qriXjiZ3pSw6U=",
+    "./_framework/dotnet.runtime.js": "sha256-cajUr4vA/MpLPWj3omULUOwEQw3i8CE2n8AmDheqWBM=",
+    "./_framework/dotnet.runtime.peu2mfb29t.js": "sha256-cajUr4vA/MpLPWj3omULUOwEQw3i8CE2n8AmDheqWBM="
+  }
+}</script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</head>
+
+<body>
+    <div id="app">
+        <svg class="loading-progress">
+            <circle r="40%" cx="50%" cy="50%" />
+            <circle r="40%" cx="50%" cy="50%" />
+        </svg>
+        <div class="loading-progress-text"></div>
+    </div>
+
+    <div id="blazor-error-ui">
+        An unhandled error has occurred.
+        <a href="." class="reload">Reload</a>
+        <span class="dismiss">🗙</span>
+    </div>
+    <script src="_framework/blazor.webassembly.66stpp682q.js"></script>
+    <script>
+        window.downloadJson = function (content, filename) {
+            const blob = new Blob([content], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        };
+
+        window.triggerClick = function (id) {
+            document.getElementById(id)?.click();
+        };
+
+        function resizeTextarea(el) {
+            el.style.height = 'auto';
+            el.style.height = el.scrollHeight + 'px';
+        }
+
+        window.resizeAllTextareas = function () {
+            document.querySelectorAll('.police-card textarea').forEach(resizeTextarea);
+        };
+
+        document.addEventListener('input', function (e) {
+            if (e.target.tagName === 'TEXTAREA') resizeTextarea(e.target);
+        });
+
+        window.generateCardPdf = async function () {
+            const card = document.querySelector('.police-card');
+            const toolbar = document.querySelector('.card-toolbar');
+
+            if (toolbar) toolbar.style.visibility = 'hidden';
+
+            try {
+                const canvas = await html2canvas(card, {
+                    scale: 2,
+                    useCORS: true,
+                    backgroundColor: '#f5eddc',
+                    onclone: function (clonedDoc) {
+                        // html2canvas nie renderuje textarea.value — podmieniamy na divy
+                        clonedDoc.querySelectorAll('.police-card textarea').forEach(clonedTa => {
+                            const orig = card.querySelector('#' + clonedTa.id);
+                            if (!orig) return;
+                            const cs = getComputedStyle(orig);
+                            const div = clonedDoc.createElement('div');
+                            div.style.fontFamily = cs.fontFamily;
+                            div.style.fontSize   = cs.fontSize;
+                            div.style.color      = cs.color;
+                            div.style.padding    = cs.padding;
+                            div.style.margin     = cs.margin;
+                            div.style.width      = cs.width;
+                            div.style.minHeight  = orig.scrollHeight + 'px';
+                            div.style.background = cs.backgroundColor;
+                            div.style.border     = cs.border;
+                            div.style.boxSizing  = 'border-box';
+                            div.style.whiteSpace = 'pre-wrap';
+                            div.style.wordBreak  = 'break-word';
+                            div.textContent = orig.value;
+                            clonedTa.replaceWith(div);
+                        });
+                    }
+                });
+
+                const { jsPDF } = window.jspdf;
+                const pxToMm   = 0.264583;
+                const widthMm  = (canvas.width  / 2) * pxToMm;
+                const heightMm = (canvas.height / 2) * pxToMm;
+
+                const pdf = new jsPDF({
+                    orientation: 'portrait',
+                    unit: 'mm',
+                    format: [widthMm, heightMm]
+                });
+
+                pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, widthMm, heightMm);
+                pdf.save('kartoteka.pdf');
+            } finally {
+                if (toolbar) toolbar.style.visibility = '';
+            }
+        };
+    </script>
+</body>
+
+</html>
